@@ -115,12 +115,9 @@ def load_data(data_dir: Path | None = None) -> RawData:
 # W1 — Inventory optimisation (Apriori association rules)
 # ---------------------------------------------------------------------------
 def _build_pm_basket(repairs: pd.DataFrame, parts_used: pd.DataFrame) -> pd.DataFrame:
-    pm_case_ids = repairs.loc[
-        repairs["maintenance_kit_applied"] == 1, "case_id"
-    ].unique()
+    # Keep all repairs completely independently of whether it is a PM or breakdown job
     scope = parts_used[
-        parts_used["case_id"].isin(pm_case_ids)
-        & (parts_used["kit_part_flag"] == 0)
+        parts_used["kit_part_flag"] == 0
     ].copy()
     basket = (
         scope.groupby(["case_id", "part_id"])["qty"]

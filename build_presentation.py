@@ -522,18 +522,18 @@ def slide_3_w1_q(prs: Presentation) -> None:
     _wp_question_slide(
         prs, page=3,
         eyebrow="Work package 1 \u00B7 Inventory optimisation",
-        title="Which add-on parts should be stocked or bundled for PM visits?",
+        title="Which parts frequently co-occur and should be bundled together?",
         question=(
-            "During preventive-maintenance jobs, technicians often consume parts "
-            "that are NOT in the standard PM kit \u2014 forcing a second trip and "
-            "eroding customer trust. We want a short, ranked stocking shortlist "
-            "and a set of bundle rules a planner can act on."
+            "Technicians often consume additional parts that break together. "
+            "We want to find which parts frequently co-occur across all repairs "
+            "completely independently of PM, so planners can pre-stock or bundle them "
+            "and replace them in every repair where one is flagged."
         ),
         data_lines=[
-            "538 PM cases from repairs.csv (maintenance_kit_applied = 1)",
+            "10,000 repair cases from repairs.csv (independent of PM flag)",
             "Add-on lines from parts_used.csv (kit_part_flag = 0)",
-            "Pivoted into a boolean basket matrix: 538 cases x 36 add-on parts",
-            "No imputation, no scaling \u2014 Apriori works on boolean baskets",
+            "Pivoted into a boolean basket matrix: 10,000 cases x 36 add-on parts",
+            "No scaling or imputation required \u2014 Apriori runs directly on baskets",
         ],
         method_title="Apriori association rules + Pareto",
         method_lines=[

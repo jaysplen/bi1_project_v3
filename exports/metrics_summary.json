@@ -1,12 +1,12 @@
 {
   "w1": {
-    "pm_cases": 2974,
-    "unique_additional_parts": 36,
-    "rules_count": 24,
-    "top_lift": 18.5875,
-    "top_confidence": 1.0,
-    "pareto_cov80_parts": 20,
-    "pareto_cov90_parts": 26,
+    "pm_cases": 7460,
+    "unique_additional_parts": 39,
+    "rules_count": 306,
+    "top_lift": 12.805577085604938,
+    "top_confidence": 0.8394004282655246,
+    "pareto_cov80_parts": 26,
+    "pareto_cov90_parts": 32,
     "method": "Apriori (mlxtend)",
     "min_support": 0.05,
     "min_lift": 1.2

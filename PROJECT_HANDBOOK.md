@@ -85,16 +85,15 @@ python3 -m pytest tests/ -v
 
 ### Business question
 
-*Which additional (non-kit) parts consumed during preventive maintenance
-should we bundle or pre-stock so the next PM visit completes in one trip?*
+*Which additional parts frequently co-occur (break together) across all repairs completely independently of whether it is a preventive maintenance or breakdown job, so that we can pre-stock or bundle them to replace them in every repair where one of these items is flagged?*
 
 * **Stakeholder.** Spare-parts planner / regional warehouse manager.
 * **CRM connection.** Inventory optimisation + first-visit completion.
 
 ### Data
 
-* `repairs.csv` filtered to `maintenance_kit_applied == 1` (the PM cohort).
-* `parts_used.csv` filtered to `kit_part_flag == 0` (add-on parts only).
+* `repairs.csv` analyzed completely independently of whether it is preventive maintenance or breakdown.
+* `parts_used.csv` filtered to `kit_part_flag == 0` (additional/add-on parts only).
 * Pivot into a boolean basket matrix (case × part).
 
 ### Method — Apriori (mlxtend)

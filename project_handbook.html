@@ -1,0 +1,201 @@
+<h1 id="vacutech-business-intelligence-data-mining-handbook">VacuTech — Business Intelligence &amp; Data Mining Handbook</h1>
+<p><strong>Programme:</strong> Bachelor of Science in Business Intelligence (B.Sc. BI) — First Semester Guide<br><strong>Course Module:</strong> DLMDSEBA02 — Data Mining &amp; Business Intelligence<br><strong>Case Study:</strong> Data-Driven Process Optimization at VacuTech Solutions<br><strong>Repository:</strong> <a href="https://github.com/jaysplen/bi1_project_v3">jaysplen/bi1_project_v3</a></p>
+<hr>
+<h2 id="1-introduction-for-bi-b-sc-students">1. Introduction for BI B.Sc. Students</h2>
+<p>Welcome to your first real-world Business Intelligence (BI) and Data Mining case study! As a first-semester B.Sc. BI student, you might wonder: <em>What is the difference between data engineering, machine learning, and business intelligence?</em> </p>
+<p>This handbook is designed to show you exactly how these fields connect. Business Intelligence is not just about creating colorful dashboards; it is about <strong>translating data into actionable business decisions</strong>. In this project, we analyze the after-sales maintenance workflow of <strong>VacuTech Solutions</strong>—a high-tech vacuum equipment supplier. </p>
+<p>Currently, VacuTech’s repair process suffers from three operational bottlenecks:</p>
+<ol>
+<li><strong>Parts delays</strong>: Technicians discover they need extra, unplanned parts, causing repair delays.</li>
+<li><strong>Uncertain scheduling</strong>: Service planners cannot give customers a reliable completion date.</li>
+<li><strong>Quality issues</strong>: Repaired pumps fail final Quality Assurance (QA) tests, forcing expensive rework loops.</li>
+</ol>
+<p>To solve these, we apply the industry-standard <strong>CRISP-DM</strong> lifecycle and build three interpretable, transparent models (W1, W2, W3). Each model targets a specific customer relationship management (CRM) goal. Let&#39;s explore how we do this and, most importantly, <strong>why</strong> we chose these specific methods.</p>
+<hr>
+<h2 id="2-the-crisp-dm-framework-our-analytical-roadmap">2. The CRISP-DM Framework: Our Analytical Roadmap</h2>
+<p>Before writing any code, professional BI analysts follow a structured project roadmap called <strong>CRISP-DM</strong> (Cross-Industry Standard Process for Data Mining). It divides a data project into six cyclical phases:</p>
+<pre><code class="lang-mermaid">graph TD
+    BU[<span class="hljs-string">"1. Business Understanding (Define the problem)"</span>] --&gt; DU[<span class="hljs-string">"2. Data Understanding (Explore the CSVs)"</span>]
+    DU --&gt; DP[<span class="hljs-string">"3. Data Preparation (Clean &amp; format)"</span>]
+    DP --&gt; M[<span class="hljs-string">"4. Modeling (Train Apriori &amp; Decision Trees)"</span>]
+    M --&gt; E[<span class="hljs-string">"5. Evaluation (Validate metrics &amp; residual spreads)"</span>]
+    E --&gt; D[<span class="hljs-string">"6. Deployment (Publish to ERP &amp; adjust stocking)"</span>]
+    D -.-&gt; BU
+</code></pre>
+<p>In this project, we follow this framework meticulously:</p>
+<ul>
+<li><strong>Business Understanding</strong>: We align each work package (W) with a concrete CRM pain point.</li>
+<li><strong>Data Understanding</strong>: We load and inspect three central tables (<code>repairs.csv</code>, <code>parts_used.csv</code>, and <code>parts.csv</code>).</li>
+<li><strong>Data Preparation</strong>: We filter out irrelevant rows, handle missing values, and encode text columns into numbers so the models can read them.</li>
+<li><strong>Modeling</strong>: We apply one simple, highly interpretable algorithm per business question.</li>
+<li><strong>Evaluation</strong>: We evaluate models using separate &quot;test data&quot; (data the model has never seen during training) to ensure they will perform reliably in production.</li>
+<li><strong>Deployment</strong>: We translate our technical metrics into clear standard operating procedures (SOPs) for the workshop manager.</li>
+</ul>
+<hr>
+<h2 id="3-live-pipeline-metrics-summary">3. Live Pipeline Metrics Summary</h2>
+<p>Professional BI relies on <strong>reproducibility</strong>—the ability to re-run the pipeline and get identical, verifiable results. The metrics below are automatically injected from our active data pipeline (<code>exports/metrics_summary.json</code>):</p>
+<!-- METRICS -->
+<p><em>To regenerate these metrics and rebuild this document, follow the commands outlined in Section 8.</em></p>
+<hr>
+<h2 id="4-w1-spare-parts-bundling-stocking-apriori-rules-">4. W1 — Spare Parts Bundling &amp; Stocking (Apriori Rules)</h2>
+<h3 id="the-business-problem-crm-value">The Business Problem &amp; CRM Value</h3>
+<p>When a technician is repairing a pump, discoverability delays occur if a critical part is missing from local inventory. This forces a second trip, increases repair duration, and erodes customer trust. </p>
+<ul>
+<li><strong>CRM Objective</strong>: Customer Development — Maximize first-visit completion rates.</li>
+<li><strong>Core Question</strong>: <em>Which additional parts frequently co-occur (break together) across all repairs completely independently of whether it is a preventive maintenance or breakdown job, so that we can pre-stock or bundle them to replace them in every repair where one is flagged?</em></li>
+</ul>
+<h3 id="the-data-mining-method-apriori-association-rules">The Data Mining Method: Apriori Association Rules</h3>
+<p>To find which parts &quot;co-occur&quot; (are consumed together), we use the <strong>Apriori algorithm</strong>. You might know this as &quot;Market Basket Analysis&quot;—the same technology Amazon uses to say <em>&quot;Customers who bought this also bought...&quot;</em>. </p>
+<p>We represent every repair case as a &quot;shopping basket&quot; of parts. If a part was used, we flag it as <code>True</code>; if not, <code>False</code>.</p>
+<blockquote>
+<p><strong>Critical Data Rule</strong>: Standard maintenance kit parts (flagged with <code>kit_part_flag = 1</code>) are strictly <strong>excluded</strong> from W1. Since standard kits are already pre-stocked, we only analyze independent/add-on parts (<code>kit_part_flag = 0</code>) to discover new bundling rules.</p>
+</blockquote>
+<p>To evaluate rules, Apriori uses three fundamental statistics:</p>
+<ol>
+<li><strong>Support</strong>: How frequently the part combination appears in the entire dataset.
+$$\text{Support}(A \rightarrow B) = \frac{\text{Cases containing both } A \text{ and } B}{\text{Total Cases}}$$
+<em>Why it matters</em>: If support is too low, the rule is too rare to be worth stocking.</li>
+<li><strong>Confidence</strong>: The probability that part $B$ is needed when part $A$ is used.
+$$\text{Confidence}(A \rightarrow B) = \frac{\text{Support}(A \cup B)}{\text{Support}(A)}$$
+<em>Why it matters</em>: 80% confidence means that in 8 out of 10 repairs needing part $A$, the technician will also need part $B$.</li>
+<li><strong>Lift</strong>: How much more likely parts are needed together compared to pure random chance.
+$$\text{Lift}(A \rightarrow B) = \frac{\text{Support}(A \cup B)}{\text{Support}(A) \times \text{Support}(B)}$$
+<em>Why it matters</em>: A Lift of $1.0$ means $A$ and $B$ are completely independent. A Lift of $12.0$ means they are strongly bound together (technically, they co-occur 12 times more than chance!).</li>
+</ol>
+<h3 id="the-pareto-principle-80-20-rule-">The Pareto Principle (80/20 Rule)</h3>
+<p>Alongside Apriori, we plot a <strong>Pareto Chart</strong>. In Business Intelligence, the Pareto Principle states that roughly <strong>80% of consequences come from 20% of causes</strong>. Here, we discover that a tiny handful of high-demand parts account for the vast majority of our add-on inventory demand.</p>
+<h3 id="results-business-implications">Results &amp; Business Implications</h3>
+<ul>
+<li><strong>Live Pareto Result</strong>: The Pareto chart shows that stocking just <strong>26 unique SKUs</strong> (out of 177 total parts) satisfies <strong>80% of all add-on inventory demand</strong>.</li>
+<li><strong>Actionable Recommendation</strong>: The operations manager should instantly stock these 26 Pareto-head SKUs at all regional warehouses. Furthermore, high-lift association rules (e.g. particular seals and washers) should be pre-packaged into physical &quot;add-on bundles&quot; for specific pump series, avoiding parts-sourcing delays entirely.</li>
+</ul>
+<hr>
+<h2 id="5-w2-predicting-repair-durations-decision-tree-regression-">5. W2 — Predicting Repair Durations (Decision Tree Regression)</h2>
+<h3 id="the-business-problem-crm-value">The Business Problem &amp; CRM Value</h3>
+<p>When a customer sends a pump for repair, they need a reliable completion date (ETA) to schedule their own production downtime. Currently, service planners give vague, unreliable estimates.</p>
+<ul>
+<li><strong>CRM Objective</strong>: Customer Retention — Deliver credible promises and reduce status-check phone calls.</li>
+<li><strong>Core Question</strong>: <em>Given what we know at intake (pump model, age, failure type, sourcing, and assigned tech), how long will this repair take?</em></li>
+</ul>
+<h3 id="the-machine-learning-method-decision-tree-regressor">The Machine Learning Method: Decision Tree Regressor</h3>
+<p>In machine learning, <strong>Regression</strong> means predicting a continuous numerical value (such as the number of days a repair will take). We chose a <strong>Decision Tree Regressor</strong> for W2 because of its ultimate <strong>interpretability</strong>. </p>
+<p>Unlike a &quot;black-box&quot; model (like a Neural Network or Support Vector Machine) which gives a prediction without explanation, a Decision Tree behaves like a clear flowchart:</p>
+<ol>
+<li>It asks a series of binary questions (e.g., <em>Is the complexity High?</em>).</li>
+<li>It splits the data into branches based on the answers.</li>
+<li>At the end of the branch (a leaf node), it calculates the average duration of historical cases that took that exact path.
+This structure is so simple that a front-desk service advisor can explain the prediction directly to a customer on a whiteboard.</li>
+</ol>
+<h3 id="business-friendly-evaluation-metrics">Business-Friendly Evaluation Metrics</h3>
+<p>To measure how well our model performs on held-out test data, we track three standard metrics:</p>
+<ul>
+<li><strong>Model Reliability ($R^2$)</strong>: Represents the percentage of scheduling variation explained by our model. An $R^2$ of <strong>92.7%</strong> means our model successfully captures almost all operational drivers of repair time.</li>
+<li><strong>Avg. Prediction Error (MAE)</strong>: Mean Absolute Error tells us that, on average, our estimates are off by only <strong>1.1 days</strong>.</li>
+<li><strong>Risk Buffer Margin (RMSE)</strong>: Root Mean Squared Error penalizes larger errors more heavily. Our RMSE of <strong>2.2 days</strong> serves as a natural &quot;worst-case&quot; buffer.</li>
+</ul>
+<h3 id="operational-discovery-predictable-vs-unpredictable-repairs">Operational Discovery: Predictable vs. Unpredictable Repairs</h3>
+<p>By analyzing our model&#39;s prediction errors (residuals), we uncovered a critical business finding:</p>
+<ul>
+<li><strong>Predictable Repairs</strong>: Maintenance categories like <code>&#39;Contamination&#39;</code> and <code>&#39;Overheating&#39;</code> have extremely narrow prediction errors (low variance). We can confidently quote a standard <strong>±1-day window</strong> on customer receipts.</li>
+<li><strong>Unpredictable Repairs</strong>: Categories like <code>&#39;Control electronics&#39;</code> and <code>&#39;Seal/Leak&#39;</code> exhibit unusually high variance (prediction errors spread widely up to 4.8 days).</li>
+<li><strong>Actionable Recommendation</strong>: Quote a wider <strong>±4-day scheduling buffer</strong> specifically for electronics/leak jobs to protect customer trust. Concurrently, operations should establish tightly standardized Standard Operating Procedures (SOPs) for these two highly variable categories to reduce workshop floor unpredictability.</li>
+</ul>
+<hr>
+<h2 id="6-w3-quality-assurance-risk-triage-decision-tree-classification-">6. W3 — Quality Assurance Risk Triage (Decision Tree Classification)</h2>
+<h3 id="the-business-problem-crm-value">The Business Problem &amp; CRM Value</h3>
+<p>If a pump fails its final Quality Assurance (QA) inspection, it must be sent back for rework. This duplicates labor costs, extends turnaround times, and—if a faulty pump accidentally slips through—severely damages customer trust.</p>
+<ul>
+<li><strong>CRM Objective</strong>: Customer Loyalty — Intercept quality issues early and prevent repeat-failure cycles.</li>
+<li><strong>Core Question</strong>: <em>Which job characteristics (such as pump models and technician work experience) predict quality failures at intake, so that high-risk cases can be flagged early for senior review?</em></li>
+</ul>
+<h3 id="dropping-repair-duration-to-avoid-data-leakage">Dropping &quot;Repair Duration&quot; to Avoid Data Leakage</h3>
+<p>In W3&#39;s model, we dropped <code>repair_duration_days</code> from the features (<code>W3_NUMERIC</code>). This solves the data leakage/timing issue and transforms W3 into a true <strong>intake-time triage system</strong>. We only use information available at the exact moment the prediction is made (at booking/intake).</p>
+<h3 id="the-machine-learning-method-decision-tree-classifier-triage-threshold">The Machine Learning Method: Decision Tree Classifier &amp; Triage Threshold</h3>
+<p>Since we are predicting a category (1 = QA Fail, 0 = QA Pass), this is a <strong>Classification</strong> task. We use a <strong>Decision Tree Classifier</strong> with an optimized <strong>Operating Threshold of 30%</strong>:</p>
+<ul>
+<li>Traditional classifiers flag an alert if the predicted risk is &gt; 50%.</li>
+<li>However, QA failures are relatively rare (~13% in our 10,000-case dataset) but highly expensive.</li>
+<li>By setting our alert trigger at <strong>30% risk</strong>, we deliberately prioritize safety, ensuring we capture a large portion of failures while keeping the review workload highly manageable for senior staff.</li>
+</ul>
+<h3 id="understanding-the-classification-metrics">Understanding the Classification Metrics</h3>
+<ul>
+<li><strong>Failures Caught (Recall)</strong>: The percentage of true quality failures successfully flagged by our model. Our model achieves <strong>49% Recall</strong> at intake.</li>
+<li><strong>Alert Accuracy (Precision)</strong>: The percentage of flagged cases that turn out to be true failures (<strong>43% Precision</strong>). Since our primary goal is preventing failure slip-throughs, we accept minor &quot;false alarms&quot; (flagging a pump that ultimately passes QA) to guarantee quality.</li>
+<li><strong>Overall Triage Accuracy</strong>: The percentage of all predictions (flagged and unflagged) that are correct (<strong>85.2%</strong>).</li>
+</ul>
+<h3 id="results-business-implications">Results &amp; Business Implications</h3>
+<ul>
+<li><strong>Triage Guidelines</strong>: Our Decision Tree automatically identified specific pump models—namely <strong><code>&#39;T1200&#39;</code></strong> and <strong><code>&#39;G400D&#39;</code></strong>—as carrying highly elevated quality risks (48% and 38% failure rates, respectively).</li>
+<li><strong>Actionable Recommendation</strong>: Route all jobs for pump models <code>&#39;T1200&#39;</code> and <code>&#39;G400D&#39;</code> through a <strong>mandatory senior technician sign-off</strong> at intake. Conversely, low-risk models (e.g. <code>&#39;G200D&#39;</code> and <code>&#39;R300&#39;</code>) should run on an automated fast-track QA queue, maximizing shop floor throughput and technician efficiency.</li>
+</ul>
+<hr>
+<h2 id="7-analytical-summary-for-bi-students">7. Analytical Summary for BI Students</h2>
+<p>To summarize our data mining and ML architecture, review this consolidated summary:</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Work Package 1 (W1)</th>
+<th>Work Package 2 (W2)</th>
+<th>Work Package 3 (W3)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Business Value</strong></td>
+<td>Parts Stocking &amp; Bundling</td>
+<td>Smart Workshop Scheduling</td>
+<td>Quality Triage &amp; Risk Control</td>
+</tr>
+<tr>
+<td><strong>Model Type</strong></td>
+<td>Descriptive Data Mining</td>
+<td>Continuous Regression</td>
+<td>Binary Classification</td>
+</tr>
+<tr>
+<td><strong>Algorithm</strong></td>
+<td>Apriori Association Rules</td>
+<td>Decision Tree Regressor</td>
+<td>Decision Tree Classifier</td>
+</tr>
+<tr>
+<td><strong>Core Finding</strong></td>
+<td>Stocking <strong>26 head SKUs</strong> covers <strong>80% of add-on demand</strong> across all repairs.</td>
+<td><code>&#39;Control electronics&#39;</code> and <code>&#39;Seal/Leak&#39;</code> are highly unpredictable.</td>
+<td>Models <code>&#39;T1200&#39;</code> and <code>&#39;G400D&#39;</code> carry <strong>38%–48% QA fail rates</strong>.</td>
+</tr>
+<tr>
+<td><strong>SOP Action</strong></td>
+<td>Pre-stock Pareto head SKUs; bundle high-lift co-occurring items.</td>
+<td>Quote standard ±1 day; quote ±4 days for electronics/leaks.</td>
+<td>Mandatory senior tech review for high-risk models; fast-track low-risk models.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="8-step-by-step-reproduction-commands">8. Step-by-Step Reproduction Commands</h2>
+<p>To replicate this entire B.Sc. Business Intelligence project end-to-end, execute the following commands from your terminal:</p>
+<pre><code class="lang-bash"># <span class="hljs-number">1</span>. Initialize <span class="hljs-keyword">python</span> virtual environment <span class="hljs-built_in">and</span> activate
+<span class="hljs-keyword">python3</span> -<span class="hljs-keyword">m</span> venv .venv
+<span class="hljs-keyword">source</span> .venv/bin/activate
+
+# <span class="hljs-number">2</span>. Install <span class="hljs-keyword">all</span> required data science libraries
+pip install -r requirements.txt
+
+# <span class="hljs-number">3</span>. Run the analytical pipeline (trains W1, W2, W3 models <span class="hljs-built_in">and</span> exports metrics)
+<span class="hljs-keyword">python3</span> bi_pipeline.<span class="hljs-keyword">py</span>
+
+# <span class="hljs-number">4</span>. Programmatically re-<span class="hljs-keyword">execute</span> the CRISP-DM Jupyter notebooks in place
+<span class="hljs-keyword">python3</span> -<span class="hljs-keyword">c</span> <span class="hljs-string">"import nbformat; from nbconvert.preprocessors import ExecutePreprocessor; ep = ExecutePreprocessor(timeout=600, kernel_name='python3'); [open(nb, 'w').write(nbformat.writes(ep.preprocess(nbformat.read(open(nb), as_version=4), {'metadata': {'path': '.'}})[0])) for nb in ['notebooks/W1_Inventory.ipynb', 'notebooks/W2_Repair_Duration.ipynb', 'notebooks/W3_QA_Failure_Risk.ipynb']]"</span>
+
+# <span class="hljs-number">5</span>. Rebuild this printable handbook PDF (embeds live pipeline KPIs)
+<span class="hljs-keyword">python3</span> build_handbook.<span class="hljs-keyword">py</span>
+
+# <span class="hljs-number">6</span>. Rebuild the <span class="hljs-number">10</span>-slide management presentation deck (PPTX + PDF)
+<span class="hljs-keyword">python3</span> build_presentation.<span class="hljs-keyword">py</span>
+
+# <span class="hljs-number">7</span>. Run the automated smoke test suite <span class="hljs-keyword">to</span> verify code correctness
+<span class="hljs-keyword">python3</span> -<span class="hljs-keyword">m</span> pytest tests/ -v
+</code></pre>
+<p>By following these CRISP-DM stages, you have successfully transformed raw workshop logs into highly strategic, governable business rules—proving the massive value of a B.Sc. in Business Intelligence!</p>

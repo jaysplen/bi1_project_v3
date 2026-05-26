@@ -155,7 +155,7 @@ def _plot_w1_pareto(basket: pd.DataFrame, out: Path) -> dict:
     ax1.bar(range(len(top)), top.values, color="#2E5FA1")
     ax1.set_xticks(range(len(top)))
     ax1.set_xticklabels(top.index, rotation=60, ha="right", fontsize=7)
-    ax1.set_ylabel("PM cases that needed this add-on part")
+    ax1.set_ylabel("Repair cases that needed this add-on part")
 
     ax2 = ax1.twinx()
     ax2.plot(
@@ -168,8 +168,8 @@ def _plot_w1_pareto(basket: pd.DataFrame, out: Path) -> dict:
     ax2.axhline(80, ls=":", color="grey")
 
     ax1.set_title(
-        f"W1 — Pareto coverage: {cov80} parts ≈ 80% of PM add-on demand "
-        f"({cov90} ≈ 90%)"
+        f"W1 — Pareto coverage: {cov80} parts \u2248 80% of total add-on demand "
+        f"({cov90} \u2248 90%)"
     )
     fig.tight_layout()
     fig.savefig(out, dpi=140)

@@ -46,7 +46,7 @@ def _metrics_block(base: dict) -> str:
 
 | Work package | Metric | Value |
 |--------------|--------|-------|
-| W1 | PM baskets analysed | {w1.get('pm_cases', '—')} |
+| W1 | Repairs analyzed | {w1.get('pm_cases', '—')} |
 | W1 | Association rules | {w1.get('rules_count', '—')} |
 | W1 | Top rule lift | {w1.get('top_lift', 0):.2f} |
 | W1 | Pareto SKUs for 80% / 90% coverage | {w1.get('pareto_cov80_parts', '—')} / {w1.get('pareto_cov90_parts', '—')} |

@@ -1,0 +1,12 @@
+{
+  "pm_cases": 2974,
+  "unique_additional_parts": 36,
+  "rules_count": 24,
+  "top_lift": 18.5875,
+  "top_confidence": 1.0,
+  "pareto_cov80_parts": 20,
+  "pareto_cov90_parts": 26,
+  "method": "Apriori (mlxtend)",
+  "min_support": 0.05,
+  "min_lift": 1.2
+}

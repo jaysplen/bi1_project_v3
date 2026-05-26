@@ -1,0 +1,8 @@
+{
+  "method": "DecisionTreeRegressor (max_depth=6, min_samples_leaf=20)",
+  "n_train": 8000,
+  "n_test": 2000,
+  "r2": 0.9265125530860407,
+  "mae": 1.0657593069736035,
+  "rmse": 2.198809726171224
+}

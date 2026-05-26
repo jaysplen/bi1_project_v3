@@ -1,0 +1,10 @@
+{
+  "method": "DecisionTreeClassifier (max_depth=6, min_samples_leaf=20)",
+  "threshold": 0.3,
+  "n_train": 8000,
+  "n_test": 2000,
+  "recall_failure": 0.49416342412451364,
+  "precision_failure": 0.43197278911564624,
+  "accuracy": 0.8515,
+  "class_balance_train_positive": 0.12825
+}

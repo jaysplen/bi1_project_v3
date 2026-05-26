@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Handbook build intermediates (keep PROJECT_HANDBOOK.md + .pdf)
+PROJECT_HANDBOOK.generated.md
+PROJECT_HANDBOOK.generated.html
